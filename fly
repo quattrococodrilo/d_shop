@@ -1,0 +1,278 @@
+#!/usr/bin/env bash
+
+# This code is based on https://github.com/laravel/sail/blob/1.x/bin/sail
+# docker run -it --entrypoint /bin/bash -v .:/code fly-dj4
+# docker run -it --entrypoint /bin/bash --env-file ./.env -v .:/code -p 80:8000 --network=django_blog_translator_fly_network fly-dj4
+
+UNAMEOUT="$(uname -s)"
+APPS_DIR="./apps"
+
+# Verify operating system is supported...
+case "${UNAMEOUT}" in
+Linux*) MACHINE=linux ;;
+Darwin*) MACHINE=mac ;;
+*) MACHINE="UNKNOWN" ;;
+esac
+
+if [ "$MACHINE" == "UNKNOWN" ]; then
+    echo "Unsupported operating system [$(uname -s)]. Django Fly supports macOS, Linux, and Windows (WSL2)." >&2
+
+    exit 1
+fi
+
+# Determine if stdout is a terminal...
+if test -t 1; then
+    # Determine if colors are supported...
+    ncolors=$(tput colors)
+
+    if test -n "$ncolors" && test "$ncolors" -ge 8; then
+        BOLD="$(tput bold)"
+        YELLOW="$(tput setaf 3)"
+        GREEN="$(tput setaf 2)"
+        NC="$(tput sgr0)"
+    fi
+fi
+
+function display_help {
+    echo "--------------------"
+    echo "Fly Manager"
+    echo "--------------------"
+    echo
+    echo "${YELLOW}Usage:${NC}" >&2
+    echo "  manage COMMAND [options] [arguments]"
+    echo
+    echo "Unknown commands are passed to the docker-compose binary."
+    echo
+    echo "${YELLOW}docker-compose Commands:${NC}"
+    echo "  ${GREEN}up${NC}          Start the application"
+    echo "  ${GREEN}up -d${NC}       Start the application in the background"
+    echo "  ${GREEN}stop${NC}        Stop the application"
+    echo "  ${GREEN}restart${NC}     Restart the application"
+    echo "  ${GREEN}ps${NC}          Display the status of all containers"
+    echo
+    echo "${YELLOW}Pip Commands:${NC}"
+    echo "  ${GREEN}fly pip ...${NC}        Run pip command"
+    echo
+    echo "${YELLOW}Django Manager Commands:${NC}"
+    echo "  ${GREEN}fly manage ...${NC}    Run manager command"
+    echo
+    echo "${YELLOW}NPM Commands:${NC}"
+    echo "  ${GREEN}fly npm ...${NC}       Run a npm command"
+    echo "  ${GREEN}fly npx ...${NC}       Run a npx command"
+    echo
+    echo "${YELLOW}Database Commands:${NC}"
+    echo "  ${GREEN}fly mysql${NC}         Start a MySQL CLI session within the 'mysql' container"
+    echo
+
+    exit 1
+}
+
+# Proxy the "help" command...
+if [ $# -gt 0 ]; then
+    if [ "$1" == "help" ] || [ "$1" == "-h" ] || [ "$1" == "-help" ] || [ "$1" == "--help" ]; then
+        display_help
+    fi
+else
+    display_help
+fi
+
+# Source the ".env" file so Laravel's environment variables are available...
+if [ ! -z "$APP_ENV" ] && [ -f ./.env.$APP_ENV ]; then
+    source ./.env.$APP_ENV
+elif [ -f ./.env ]; then
+    source ./.env
+fi
+
+# Define environment variables...
+export APP_PORT=${APP_PORT:-80}
+export APP_SERVICE=${APP_SERVICE:-"django"}
+export DB_PORT=${DB_PORT:-3306}
+export WWWUSER=${USERID:-$UID}
+export WWWGROUP=${GROUPID:-$(id -g)}
+export FLY_FILES=${FLY_FILES:-""}
+
+# Function that outputs Sail is not running...
+function fly_is_not_running {
+    echo "${BOLD}Fly is not running.${NC}" >&2
+    echo "" >&2
+    echo "${BOLD}You may Fly using the following commands:${NC} './fly up' or './fly up -d'" >&2
+
+    exit 1
+}
+
+# Define Docker Compose command prefix...
+docker compose &>/dev/null
+if [ $? == 0 ]; then
+    DOCKER_COMPOSE=(docker compose)
+else
+    DOCKER_COMPOSE=(docker-compose)
+fi
+
+
+if [ "$APP_DEBUG"  == "True" ] && [ -f "docker-compose-dev.yml" ]; then
+    DOCKER_COMPOSE+=(-f docker-compose-dev.yml)
+fi
+
+function docker_compose_not_exists {
+    echo "${BOLD}Unable to find Docker Compose file: '${FILE}'${NC}" >&2
+
+    exit 1
+}
+
+if [ -n "$FLY_FILES" ]; then
+    # Convert FLY_FILES to an array...
+    IFS=':' read -ra FLY_FILES <<<"$FLY_FILES"
+
+    for FILE in "${FLY_FILES[@]}"; do
+        if [ -f "$FILE" ]; then
+            DOCKER_COMPOSE+=(-f "$FILE")
+        else
+            docker_compose_not_exists
+        fi
+    done
+else
+    FILES=($(ls))
+    COMPOSER_EXISTS=0
+
+    for FILE in "${FILES[@]}"; do
+        if [ "$FILE" == "docker-compose.yml" ]; then
+            COMPOSER_EXISTS=1
+        fi
+    done
+
+    if [ $COMPOSER_EXISTS -eq 0 ]; then
+        docker_compose_not_exists
+    fi
+fi
+
+EXEC="yes"
+
+if [ -z "$FLY_SKIP_CHECKS" ]; then
+    # Ensure that Docker is running...
+    if ! docker info >/dev/null 2>&1; then
+        echo "${BOLD}Docker is not running.${NC}" >&2
+
+        exit 1
+    fi
+
+    # Determine if Fly is currently up...
+
+    IFS=',' read -ra APP_SERVICE <<<"$APP_SERVICE"
+
+    if "${DOCKER_COMPOSE[@]}" ps "$APP_SERVICE" 2>&1 | grep 'Exit\|exited'; then
+        echo "${BOLD}Shutting down old Fly processes...${NC}" >&2
+
+        "${DOCKER_COMPOSE[@]}" down >/dev/null 2>&1
+
+        EXEC="no"
+    elif [ -z "$("${DOCKER_COMPOSE[@]}" ps -q)" ]; then
+        EXEC="no"
+    fi
+fi
+
+ARGS=()
+
+# Proxy docker-compose commands to the docker-compose binary on the application container...
+if [ "$1" == "docker-compose" ]; then
+    shift 1
+
+    if [ "$EXEC" == "yes" ]; then
+        ARGS+=(exec -u fly)
+        [ ! -t 0 ] && ARGS+=(-T)
+        ARGS+=("$APP_SERVICE" "${DOCKER_COMPOSE[@]}")
+    else
+        fly_is_not_running
+    fi
+
+# Proxy pip commands to the "pip" binary on the application container...
+elif [ "$1" == "pip" ]; then
+    shift 1
+
+    if [ "$EXEC" == "yes" ]; then
+        ARGS+=(exec -u fly)
+        [ ! -t 0 ] && ARGS+=(-T)
+        ARGS+=("$APP_SERVICE" venv/bin/pip "$@")
+    else
+        fly_is_not_running
+    fi
+
+# Proxy manage commands to the "manage.py" binary on the application container...
+elif [ "$1" == "manage" ] || [ "$1" == "man" ]; then
+    shift 1
+
+    if [ "$EXEC" == "yes" ]; then
+        ARGS+=(exec -u fly)
+
+        [ ! -t 0 ] && ARGS+=(-T)
+        ARGS+=("$APP_SERVICE" venv/bin/python manage.py "$@")
+
+    else
+        fly_is_not_running
+    fi
+
+# Proxy NPM commands to the "npm" binary on the application container...
+elif [ "$1" == "npm" ]; then
+    shift 1
+
+    if [ "$EXEC" == "yes" ]; then
+        # ARGS+=(exec -u fly)
+        ARGS+=(exec)
+        [ ! -t 0 ] && ARGS+=(-T)
+        # ARGS+=(node npm "$@")
+        ARGS+=("$APP_SERVICE" npm "$@")
+    else
+        fly_is_not_running
+    fi
+
+# Proxy npx commands to the "npm" binary on the application container...
+elif [ "$1" == "npx" ]; then
+    shift 1
+
+    if [ "$EXEC" == "yes" ]; then
+        # ARGS+=(exec -u fly)
+        ARGS+=(exec)
+        [ ! -t 0 ] && ARGS+=(-T)
+        ARGS+=(node npx "$@")
+    else
+        fly_is_not_running
+    fi
+
+# Initiate a MySQL CLI terminal session within the "mysql" container...
+elif [ "$1" == "mysql" ]; then
+    shift 1
+
+    if [ "$EXEC" == "yes" ]; then
+        ARGS+=(exec)
+        [ ! -t 0 ] && ARGS+=(-T)
+        ARGS+=(db bash -c)
+        # ARGS+=("MYSQL_PWD=\${DB_PASSWORD} mysql -u \${DB_USERNAME} \${DB_DATABASE}")
+        ARGS+=("MYSQL_PWD=${DB_PASSWORD} mysql -u ${DB_USERNAME} ${DB_DATABASE}")
+    else
+        fly_is_not_running
+    fi
+
+# Initiate a PostgreSQL CLI terminal session within the "postgres" container...
+elif [ "$1" == "psql" ]; then
+    shift 1
+
+    if [ "$EXEC" == "yes" ]; then
+        ARGS+=(exec)
+        [ ! -t 0 ] && ARGS+=(-T)
+        ARGS+=(db bash -c)
+        ARGS+=("PGPASSWORD=${DB_PASSWORD} psql -U ${DB_USERNAME} ${DB_DATABASE}")
+    else
+        fly_is_not_running
+    fi
+else
+    ARGS+=("$@")
+fi
+
+echo "${DOCKER_COMPOSE[@]} ${ARGS[@]}"
+
+"${DOCKER_COMPOSE[@]}" "${ARGS[@]}"
+
+for arg in "${ARGS[@]}"; do
+    if [ "$arg" == 'startapp' ]; then
+        mv "${ARGS[-1]}" "$APPS_DIR"
+    fi
+done

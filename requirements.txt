@@ -1,0 +1,4 @@
+-r requirements_common.txt
+
+# psycopg2
+psycopg2-binary

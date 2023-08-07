@@ -1,0 +1,39 @@
+{% extends "admin/base_site.html" %}
+{% load i18n %}
+
+{% block breadcrumbs %}
+    <div class="breadcrumbs">
+        <a href="{% url 'admin:index' %}">{% translate 'Home' %}</a>
+    </div>
+{% endblock breadcrumbs %}
+
+{% block nav-sidebar %}
+{% endblock nav-sidebar %}
+
+{% block content %}
+ 
+    {% comment %}
+    <p>
+        {% translate "Thanks for spending some quality time with the web site today." %}
+    </p>
+
+    <p>
+        <a href="{% url 'admin:index' %}">{% translate 'Log in again' %}</a>
+    </p>
+    {% endcomment %}
+
+    <div class="p-8 text-center bg-white rounded shadow-md">
+        <h2 class="mb-4 text-2xl">
+            Has cerrado la sesión
+        </h2>
+        <p class="mb-4">
+            Gracias por visitarnos. Esperamos verte de nuevo pronto.
+        </p>
+        <a 
+            href="{% url 'admin:index' %}"
+           class="inline-block py-2 px-4 text-white bg-blue-500 rounded hover:bg-blue-600">
+            Iniciar sesión de nuevo
+        </a>
+    </div>
+
+{% endblock %}

@@ -1,0 +1,28 @@
+{% extends "admin/base_site.html" %}
+
+{% block content %}
+
+
+
+    <div class="p-8 text-center bg-white rounded shadow-md">
+        <h2 class="mb-4 text-2xl">
+            Perfil de Usuario
+        </h2>
+        <p>
+            <strong>Nombre de usuario:</strong> {{ user.username }}
+        </p>
+        <p>
+            <strong>Email:</strong> {{ user.email }}
+        </p>
+        <p>
+            <strong>Nombre:</strong> {{ user.first_name }} {{ user.last_name }}
+        </p>
+        <p>
+            <strong>Fecha de registro:</strong> {{ user.date_joined }}
+        </p>
+        <a href="{% url 'admin:logout' %}"
+           class="inline-block py-2 px-4 mt-4 text-white bg-red-500 rounded hover:bg-red-600">
+            Cerrar sesión
+        </a>
+    </div>
+{% endblock content %}

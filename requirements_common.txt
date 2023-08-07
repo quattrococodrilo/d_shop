@@ -1,0 +1,43 @@
+Django
+
+# ------------------------------------------------------------
+# Dev
+# ------------------------------------------------------------
+autopep8
+djlint
+factory_boy
+faker
+# mypy
+
+# ------------------------------------------------------------
+# django third party
+# ------------------------------------------------------------
+# django-filter
+# django-hosts
+# djangorestframework-jsonapi
+# inflection
+# mysqlclient
+# python-dotenv
+# pytz
+# sqlparse
+# tzdata
+django-environ
+django-extensions
+# django-taggit
+# djangorestframework
+pillow
+python-dotenv
+# social-auth-app-django
+django-debug-toolbar
+
+# ------------------------------------------------------------
+# Other third party
+# ------------------------------------------------------------
+ipython
+markdown
+# responses
+# pyOpenSSL
+# werkzeug
+# easy-thumbnails
+# redis
+colorama
