@@ -58,6 +58,7 @@ LOCAL_URLS = [
     # ------------------------------------------------------------
     # Local apps
     # ------------------------------------------------------------
+    path("shop/", include('apps.shop.urls'))
 ]
 
 urlpatterns = DJANGO_URLS + FLY_URLS + THIRD_PARTY_URLS + LOCAL_URLS

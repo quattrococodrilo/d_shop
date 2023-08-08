@@ -59,14 +59,14 @@ services:
     networks:
       - fly_network
 
-  redis:
-    image: redis:latest
-    ports:
-      - "${REDIS_PORT}:6379"
-    volumes:
-      - redis-data:/data
-    networks:
-      - fly_network
+  # redis:
+  #   image: redis:latest
+  #   ports:
+  #     - "${REDIS_PORT}:6379"
+  #   volumes:
+  #     - redis-data:/data
+  #   networks:
+  #     - fly_network
 
 volumes:
   # mysql:

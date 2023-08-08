@@ -1,0 +1,32 @@
+{% extends "shop/base.html" %}
+{% load static %}
+
+{% block title %}
+    {{ block.super }} | {{ product.name }}
+{% endblock title %}
+
+{% block content %}
+    <div class="flex flex-col p-6 md:flex-row bg-dshop-light-100">
+        <div class="p-3 w-full md:w-1/2">
+            <img class="mx-auto"
+                src="{% if product.image %}{{ product.image.url }}{% else %}{% static "shop/img/no_image.png" %}{% endif %}"
+                 alt="{{ product.name }}">
+        </div>
+        <div class="p-3 w-full md:w-1/2">
+            <h1 class="text-2xl text-dshop-dark-500">
+                {{ product.name }}
+            </h1>
+            <p class="text-dshop-gray-500">
+                {{ product.description }}
+            </p>
+            <p class="mt-2 text-xl text-dshop-blue-500">
+                ${{ product.price }}
+            </p>
+            <div class="mt-4">
+                <button class="py-2 px-4 bg-dshop-yellow-500 text-dshop-dark-500 hover:bg-dshop-yellow-400">
+                    Add to Cart
+                </button>
+            </div>
+        </div>
+    </div>
+{% endblock content %}

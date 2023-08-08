@@ -1,0 +1,103 @@
+{% extends "shop/base.html" %}
+{% load ui_components %}
+{% load static %}
+
+{% block title %}
+    {{ block.super }} | Products
+{% endblock title %}
+
+{% block subheader %}
+    <div class="p-4 bg-white rounded shadow">
+        <div class="container mx-auto">
+            <form action="{% url 'shop:list' %}{% if q_category %}?{{ q_category }}{% endif %}"
+                  method="GET">
+                <div class="flex justify-center items-center py-1 px-2 rounded-md border border-dshop-gray-300">
+                    <span>
+                        {% icon "solid.magnifying-glass" extra_class="transform scale-x-[-1] fill-dshop-gray-300" %}
+                    </span>
+                    <input type="text"
+                           name="q"
+                           placeholder="Search products..."
+                           value="{{ input_query }}"
+                           class="p-2 w-full rounded border-none focus:outline-none placeholder:text-dshop-gray-300">
+                </div>
+            </form>
+
+            <div class="flex mt-4 space-x-2">
+                <h4>
+                    Category filters:
+                </h4>
+                <ul class="flex space-x-2">
+                    {% for category in categories %}
+                        <li class="font-semibold capitalize text-dshop-gray-500">
+                            <a href="{% url 'shop:list' %}?category={{ category.slug }}{% if q %}&{{ q }}{% endif %}"
+                               class="text-dshop-blue">
+                                {{ category.name }}
+                            </a>
+                        </li>
+                    {% endfor %}
+                    <li class="font-semibold capitalize text-dshop-gray-500">
+                        <a href="{% url 'shop:list' %}" class="text-dshop-blue">
+                            Clean
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+{% endblock subheader %}
+
+{% block content %}
+    <div class="flex flex-col space-y-2 bg-dshop-yellow-100">
+        {% for product in products %}
+            <div class="py-4 px-4">
+                <div>
+                    <div class="flex p-4 bg-white rounded shadow">
+                    <img src="{% if product.image %}{{ product.image.url }}{% else %}{% static "shop/img/no_image.png" %}{% endif %}"
+                             alt="{{ product.name }}"
+                             class="object-cover w-1/4 h-32">
+                        <div class="ml-4">
+                            <h3 class="text-xl font-bold">
+                                {{ product.name }}
+                            </h3>
+                            <p class="text-dshop-gray">
+                                $ {{ product.price }}
+                            </p>
+                        <a href="{{ product.get_absolute_url }}" class="text-dshop-blue-500">View Details</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+
+    <div class="py-6 text-center bg-dshop-yellow-100">
+        <div class="inline-flex items-center">
+            {% if products.has_previous %}
+                <a href="?page=1{{ url_query }}"
+                   class="py-2 px-4 text-dshop-blue-100 bg-dshop-gray-500 hover:bg-bg-dshop-blue-400">
+                    &laquo; first
+                </a>
+                <a href="?page={{ products.previous_page_number }}{{ url_query }}"
+                   class="py-2 px-4 text-dshop-blue-100 bg-dshop-gray-500 hover:bg-dshop-blue-400">
+                    previous
+                </a>
+            {% endif %}
+
+            <span class="py-2 px-4 bg-dshop-gray-500 text-dshop-gray-100">
+                Page {{ products.number }} of {{ products.paginator.num_pages }}.
+            </span>
+
+            {% if products.has_next %}
+                <a href="?page={{ products.next_page_number }}{{ url_query }}"
+                   class="py-2 px-4 text-dshop-blue-100 bg-dshop-gray-500 hover:bg-dshop-blue-400">
+                    next
+                </a>
+                <a href="?page={{ products.paginator.num_pages }}{{ url_query }}"
+                   class="py-2 px-4 text-dshop-blue-100 bg-dshop-gray-500 hover:bg-dshop-blue-400">
+                    last &raquo;
+                </a>
+            {% endif %}
+        </div>
+    </div>
+{% endblock content %}

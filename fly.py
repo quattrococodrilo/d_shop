@@ -508,14 +508,14 @@ class DjangoManageCommand(BaseCommand):
                 "name = '", f"name = '{apps_dir.name}."
             )
             apps_file.write_text(apps_file_content)
-            shutil.move(args.args[-1], self.ENV.APPS_DIR)
+            shutil.move(new_app_name, apps_dir / new_app_name)
             self.printer.success(f"App {new_app} created.")
 
             config_app_name: str = (
                 new_app_name.replace("_", " ").title().replace(" ", "")
             )
             self.printer.success(
-                f"{apps_dir.name}.{new_app_name}.apps.{config_app_name}Config"
+                f'"{apps_dir.name}.{new_app_name}.apps.{config_app_name}Config"'
             )
 
 

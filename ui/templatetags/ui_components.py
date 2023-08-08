@@ -77,16 +77,17 @@ def icon(icon, width=6, height=6, extra_class="", attrs=""):
     icon = icon.replace(".", "/")
     template = f"ui/icons/{icon}.html"
 
-    attrs_splitted = attrs.split(" ")
+    attrs_splitted = filter(lambda x: x, attrs.split(" "))
 
     _attrs = ""
 
-    for attr in attrs_splitted:
-        [key, value] = attr.split("=")
-        if key == "class":
-            extra_class += f" {value}"
-        else:
-            _attrs += f' {key}="{value}"'
+    if attrs_splitted: 
+        for attr in attrs_splitted:
+            [key, value] = attr.split("=")
+            if key == "class":
+                extra_class += f" {value}"
+            else:
+                _attrs += f' {key}="{value}"'
 
     _attrs = mark_safe(_attrs.strip().replace("'", '"')) 
     extra_class = mark_safe(extra_class.strip())

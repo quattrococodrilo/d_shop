@@ -14,16 +14,18 @@ from pathlib import Path
 
 import environ
 
+# Build paths inside the project like this: BASE_DIR / 'subdir'.
+BASE_DIR = Path(__file__).resolve().parent.parent
+
 env = environ.Env(
     APP_DEBUG=(bool, False),
     APP_ENVIRON=(bool, False),
     APP_STATIC_URL=(str, "static/"),
     APP_MEDIA_URL=(str, "media/"),
+    APPS_DIR=(str, "apps/"),
     EMAIL_USE_TLS=(bool, False),
 )
-
-# Build paths inside the project like this: BASE_DIR / 'subdir'.
-BASE_DIR = Path(__file__).resolve().parent.parent
+env.read_env(BASE_DIR / ".env")
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.0/howto/deployment/checklist/
@@ -33,7 +35,6 @@ SECRET_KEY = env("APP_SECRET_KEY")
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = env("APP_DEBUG")
-
 
 ALLOWED_HOSTS = env("APP_ALLOWED_HOSTS").split(",")
 
@@ -47,8 +48,9 @@ INTERNAL_IPS = [
 # DEBUG
 # ------------------------------------------------------------
 if DEBUG:
-    from core.utils.globals import SET_GLOBALS
     import socket  # only if you haven't already imported this
+
+    from core.utils.globals import SET_GLOBALS
 
     SET_GLOBALS()
 
@@ -96,11 +98,15 @@ FLY_APPS: list[str] = [
     "ui.apps.UiConfig",
 ]
 
-LOCAL_APPS: list[str] = []
+LOCAL_APPS: list[str] = [
+    "apps.shop.apps.ShopConfig",
+]
 
 INSTALLED_APPS = (
     FLY_APPS + DJANGO_APPS_DEFAULT + DJANGO_APPS_EXTRA + THIRD_PARTY_APPS + LOCAL_APPS
 )
+
+APPS_DIR = env("APPS_DIR")
 
 # ------------------------------------------------------------
 # MIDDLEWARE
@@ -174,8 +180,8 @@ STORAGES = {
     },
     "staticfiles": {
         # https://docs.djangoproject.com/en/4.2/ref/contrib/staticfiles/#storages
-        # "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
-        "BACKEND": "django.contrib.staticfiles.storage.ManifestStaticFilesStorage",
+        "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
+        # "BACKEND": "django.contrib.staticfiles.storage.ManifestStaticFilesStorage",
     },
     # "example": {
     #     "BACKEND": "django.core.files.storage.FileSystemStorage",

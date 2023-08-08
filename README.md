@@ -36,25 +36,41 @@ Fly is inspired in Laravel Sail, so, with this app manager you can:
 
 ### Create New App
 
-When create a new a app with `./fly.py manage startapp {app_name}`, the app will be created in apps directory.
+When create a new a app with `./fly.py manage startapp {app_name}`, the app will
+be created in apps directory.
+
+### Make New Secret Key
+
+Create a new secret key for Django project.
+
+```bash
+./fly.py manage make_key
+
+```
+
+### Make Template
+
+The make_template is a custom management command in Django that creates a template
+file within a specified app's templates directory. The command takes a path argument
+and creates the necessary directories and a template file that extends a base template.
+
+```bash
+./fly.py manage make_template app_name/{sub_dir}/template_name.html
+```
 
 ### Seeder
 
 To create a seeder, execute:
 
 ```bash
-
-./fly manage make_seeder {app_name}
-
+./fly.py manage make_seeder {app_name}
 
 ```
 
 With this command you can seed your database.
 
 ```bash
-
-./fly manage seed --seeder={app_name}.{seeder_function_name}
-
+./fly.py manage seed --seeder={app_name}.{seeder_function_name}
 
 ```
 
@@ -93,7 +109,7 @@ Execute seeder:
 
 ```bash
 
-./fly manage seed --seeder=core.user_seeder
+./fly.py manage seed --seeder=core.user_seeder
 
 
 ```
@@ -227,7 +243,7 @@ Contains static methods for global debugging.
   ```
 
 - `printer(*args, title="DEBUG")`: A global print function that prints a debug
-header and footer around the arguments.
+  header and footer around the arguments.
 
   Example:
 

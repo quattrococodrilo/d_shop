@@ -1,0 +1,52 @@
+{% extends "shop/base.html" %}
+
+{% block title %}
+    {{ block.super }} | Welcome
+{% endblock title %}
+
+{% block subheader %}
+    <div class="container py-20 mx-auto text-center bg-dshop-yellow-200 text-dshop-gray-500">
+        <h1 class="text-5xl font-bold">
+            Welcome to D-Shop
+        </h1>
+        <p class="mt-4 text-xl">
+            Find the best products at unbeatable prices!
+        </p>
+        <a href="{% url 'shop:list' %}"
+           class="inline-block py-2 px-6 mt-6 text-white rounded bg-dshop-blue-500">
+            Shop Now
+        </a>
+    </div>
+{% endblock subheader %}
+
+{% block content_class %}
+    {{ block.super }} bg-dshop-yellow-100
+{% endblock content_class %}
+
+{% block content %}
+
+    <section class="px-6 py-6">
+        <h2 class="mb-6 text-3xl font-bold text-center">
+            Featured Products
+        </h2>
+        <div class="grid grid-cols-1 gap-8 md:grid-cols-3">
+            {% for product in products %}
+                <div class="p-4 bg-white rounded shadow">
+                    <img src="{% if product.image %}{{ product.image.url }}{% endif %}"
+                         alt="{{ product.name }}"
+                         class="object-cover mb-4 w-full h-48">
+                    <h3 class="text-xl font-bold">
+                        {{ product.name }}
+                    </h3>
+                    <p class="text-gray-600">
+                        $ {{ product.price }}
+                    </p>
+                    <a href="{{ product.get_absolute_url }}" class="text-dshop-blue-500">
+                        View Details
+                    </a>
+                </div>
+            {% endfor %}
+        </div>
+    </section>
+ 
+{% endblock content %}

@@ -45,8 +45,9 @@ class FlyDebugGlobals:
         print(colored_line)
         print(colored_title)
         print(colored_line)
+        print(colorama.Fore.WHITE + colorama.Style.RESET_ALL)
         for i, arg in enumerate(args):
-            print(colorama.Fore.WHITE + colorama.Style.NORMAL + arg)
+            print(arg)
             if i < len(args) - 1:
                 print("")
         print(colored_line)

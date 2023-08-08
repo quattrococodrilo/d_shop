@@ -21,8 +21,10 @@
         {% endblock header %}
 
         <main class="{% block main_class %} flex-grow {% endblock main_class %}">
-            {% block content %}
-            {% endblock content %}
+            <div class="{% block content_class %} container mx-auto my-6 {% endblock content_class %}">
+                {% block content %}
+                {% endblock content %}
+            </div>
         </main>
         
         {% block footer %}
