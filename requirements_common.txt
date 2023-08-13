@@ -15,7 +15,7 @@ faker
 # django-filter
 # django-hosts
 # django-taggit
-# djangorestframework
+djangorestframework
 # djangorestframework-jsonapi
 # inflection
 # mysqlclient

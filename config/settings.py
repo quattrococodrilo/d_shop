@@ -100,6 +100,7 @@ FLY_APPS: list[str] = [
 
 LOCAL_APPS: list[str] = [
     "apps.shop.apps.ShopConfig",
+    "apps.cart.apps.CartConfig",
 ]
 
 INSTALLED_APPS = (
@@ -284,6 +285,7 @@ PASSWORD_HASHERS = [
 LOGIN_URL = "/accounts/login/"
 LOGIN_REDIRECT_URL = "/accounts/profile/"
 
+# https://docs.djangoproject.com/en/4.2/ref/settings/#sessions
 # SESSION_ENGINE = "django.contrib.sessions.backends.db"
 # SESSION_SERIALIZER = 'django.contrib.sessions.serializers.JSONSerializer'
 
@@ -353,3 +355,9 @@ REDIS_DB = env("REDIS_DB")
 # ------------------------------------------------------------
 VITE_PORT = env("VITE_PORT")
 VITE_SRC = "/ui/vite_src/"
+
+# ------------------------------------------------------------
+# Project settings
+# ------------------------------------------------------------
+
+CART_SESSION_ID = "cart"

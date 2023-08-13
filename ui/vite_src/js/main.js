@@ -7,6 +7,7 @@ window.axios = axios;
 const csrfToken = document.querySelector('[name=csrf-token]').content;
 window.axios.defaults.headers.common['X-CSRFToken'] = csrfToken;
 window.axios.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
+window.axios.defaults.headers.common['Content-Type'] = 'application/json';
 
 window.Alpine = Alpine;
 Alpine.start();

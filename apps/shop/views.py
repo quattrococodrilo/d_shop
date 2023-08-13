@@ -6,6 +6,7 @@ from apps.shop.models import Category, Product
 
 
 def index(request):
+    FLY.printer("Hello World")
     return render(request, "shop/index.html")
 
 

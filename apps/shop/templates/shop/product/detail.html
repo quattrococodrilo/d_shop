@@ -8,9 +8,7 @@
 {% block content %}
     <div class="flex flex-col p-6 md:flex-row bg-dshop-light-100">
         <div class="p-3 w-full md:w-1/2">
-            <img class="mx-auto"
-                src="{% if product.image %}{{ product.image.url }}{% else %}{% static "shop/img/no_image.png" %}{% endif %}"
-                 alt="{{ product.name }}">
+            <img class="mx-auto" src="{% if product.image %}{{ product.image.url }}{% else %}{% static "shop/img/no_image.png" %}{% endif %}" alt="{{ product.name }}">
         </div>
         <div class="p-3 w-full md:w-1/2">
             <h1 class="text-2xl text-dshop-dark-500">
@@ -22,11 +20,201 @@
             <p class="mt-2 text-xl text-dshop-blue-500">
                 ${{ product.price }}
             </p>
-            <div class="mt-4">
-                <button class="py-2 px-4 bg-dshop-yellow-500 text-dshop-dark-500 hover:bg-dshop-yellow-400">
+            <div class="flex mt-4 space-x-2">
+                <input type="number"
+                       id="input_quantity"
+                       class="py-1 px-3 w-16 rounded border border-dshop-gray-300">
+                <button class="py-2 px-4 font-bold bg-dshop-yellow-500 text-dshop-dark-500 hover:bg-dshop-yellow-400"
+                        id="add_to_cart">
                     Add to Cart
+                    <span id="text_quantity"></span>
                 </button>
             </div>
+
+            {# Total items in cart  #}
+            <p id="total_items" class="text-sm text-dshop-gray-300 mt-1">
+                Total items in cart:
+            </p>
+ 
+            {# Alert #}
+            <div class="py-1 px-3 mt-4 rounded-sm" id="alert">
+            </div>
+
+
         </div>
     </div>
 {% endblock content %}
+
+{% block scripts %}
+    {{ block.super }}
+    <script>
+        $(document).ready(function() {
+
+            const cart_api = "{% url 'cart:add_item_to_cart' %}"
+            const cart_data_api = "{% url 'cart:get_item_cart' pk=product.id %}"
+            const product_id = "{{ product.id }}"
+            const headers = {
+                'X-CSRFToken': '{{ csrf_token }}',
+                'Content-Type': 'application/json',
+            }
+
+            const ref = (data) => {
+                if ("init" in data) {
+                    data.init()
+                }
+                return data
+            }
+
+            const EventBus = {
+                _eventTarget: new EventTarget(),
+
+                subscribe(eventName, callback) {
+                    this._eventTarget.addEventListener(eventName, callback);
+                },
+                publish(eventName, detail) {
+                    const event = new CustomEvent(eventName, {
+                        detail
+                    });
+                    this._eventTarget.dispatchEvent(event);
+                },
+                unsubscribe(eventName, callback) {
+                    this._eventTarget.removeEventListener(eventName, callback);
+                }
+            }
+
+            // ------------------------------------------------------------
+            // Quantity
+            // ------------------------------------------------------------
+            const totalItems = ref({
+                el: $('#total_items'),
+                _value: 0,
+                get value() {
+                    return this._value
+                },
+                set value(newValue) {
+                    this._value = newValue
+                    this.bind()
+                },
+                init() {
+                    this.getQuantity()
+                    EventBus.subscribe('get-total-items', this.getQuantity)
+                },
+                bind() {
+                    this.el.append(this.value)
+
+                    if (this.value > 0) {
+                        this.el.show();
+                    } else {
+                        this.el.hide(); // Hide the element if the value is 0 or less
+                    }
+                },
+                async getQuantity() {
+                    try {
+                        const response = await fetch(cart_data_api, {
+                            method: 'GET',
+                            headers: headers,
+                        })
+
+                        const data = await response.json();
+
+                        if (response.status == 200) {
+                            console.log(data)
+                            this.el.append(data.quantity)
+                        } else {
+                            console.error(data)
+                        }
+                    } catch (error) {
+                        console.error('An error occurred:', error)
+                    }
+                },
+            })
+
+            // ------------------------------------------------------------
+            // Quantity
+            // ------------------------------------------------------------
+            const quantity = ref({
+                value: 1,
+                el: $('#input_quantity'),
+                init() {
+                    this.bind()
+                },
+                bind() {
+                    this.el.val(this.value)
+                    this.el.on('change', () => {
+                        this.value = this.el.val()
+                        EventBus.publish('quantity-changed', this.value)
+                    })
+                },
+            })
+
+            // ------------------------------------------------------------
+            // Button
+            // ------------------------------------------------------------
+            const button = ref({
+                el: $('#add_to_cart'),
+                init() {
+                    this.el.on('click', this.addToCart)
+                },
+                async addToCart() {
+                    try {
+                        const response = await fetch(cart_api, {
+                            method: 'POST',
+                            headers: headers,
+                            body: JSON.stringify({
+                                product_id: product_id,
+                                quantity: quantity.value,
+                            }),
+                        })
+
+                        const data = await response.json();
+
+                        if (response.status == 200) {
+                            alertEl.showSuccess(data.message);
+                        } else {
+                            alertEl.showError(data);
+                        }
+                    } catch (error) {
+                        console.error('An error occurred:', error);
+                        alertEl.showError(`An error occurred: ${error}`);
+                    }
+                },
+            })
+
+            // ------------------------------------------------------------
+            // Alert
+            // ------------------------------------------------------------
+            const alertEl = ref({
+                el: $('#alert'),
+                successClass: 'text-green-500 bg-green-200',
+                errorClass: 'text-red-500 bg-red-200',
+                init() {
+                    this.hidden()
+                    EventBus.subscribe('alert-error', (e) => {
+                        this.showError(e.detail)
+                    })
+                    EventBus.subscribe('alert-success', (e) => {
+                        this.showSuccess(e.detail)
+                    })
+                },
+                hidden() {
+                    this.el.hide()
+                },
+                show(info) {
+                    this.el.text(info)
+                    this.el.show()
+                },
+                showError(info) {
+                    this.el.removeClass(this.successClass)
+                    this.el.addClass(this.errorClass)
+                    this.show(info)
+                },
+                showSuccess(info) {
+                    this.el.removeClass(this.errorClass)
+                    this.el.addClass(this.successClass)
+                    this.show(info)
+                }
+            })
+
+        })
+    </script>
+{% endblock scripts %}
