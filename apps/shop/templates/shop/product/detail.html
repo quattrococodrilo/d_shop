@@ -50,6 +50,10 @@
     <script>
         $(document).ready(function() {
 
+            // ------------------------------------------------------------
+            // Constants
+            // ------------------------------------------------------------
+
             const cart_api = "{% url 'cart:add_item_to_cart' %}"
             const cart_data_api = "{% url 'cart:get_item_cart' pk=product.id %}"
             const product_id = "{{ product.id }}"
@@ -57,6 +61,10 @@
                 'X-CSRFToken': '{{ csrf_token }}',
                 'Content-Type': 'application/json',
             }
+
+            // ------------------------------------------------------------
+            // Utils
+            // ------------------------------------------------------------
 
             const ref = (data) => {
                 if ("init" in data) {
@@ -97,10 +105,12 @@
                 },
                 init() {
                     this.getQuantity()
-                    EventBus.subscribe('get-total-items', this.getQuantity)
+                    EventBus.subscribe('cart-updated', () => {
+                        this.getQuantity()
+                    })
                 },
                 bind() {
-                    this.el.append(this.value)
+                    this.el.text('Total items in cart: ' + this.value)
 
                     if (this.value > 0) {
                         this.el.show();
@@ -119,7 +129,7 @@
 
                         if (response.status == 200) {
                             console.log(data)
-                            this.el.append(data.quantity)
+                            this.value = data.quantity
                         } else {
                             console.error(data)
                         }
@@ -142,7 +152,6 @@
                     this.el.val(this.value)
                     this.el.on('change', () => {
                         this.value = this.el.val()
-                        EventBus.publish('quantity-changed', this.value)
                     })
                 },
             })
@@ -150,7 +159,7 @@
             // ------------------------------------------------------------
             // Button
             // ------------------------------------------------------------
-            const button = ref({
+            const buttonAddToCart = ref({
                 el: $('#add_to_cart'),
                 init() {
                     this.el.on('click', this.addToCart)
@@ -169,13 +178,14 @@
                         const data = await response.json();
 
                         if (response.status == 200) {
-                            alertEl.showSuccess(data.message);
+                            EventBus.publish('cart-updated')
+                            EventBus.publish('alert-success', data.message)
                         } else {
-                            alertEl.showError(data);
+                            EventBus.publish('alert-error', data)
                         }
                     } catch (error) {
                         console.error('An error occurred:', error);
-                        alertEl.showError(`An error occurred: ${error}`);
+                        EventBus.publish('alert-error', error)
                     }
                 },
             })
@@ -189,6 +199,8 @@
                 errorClass: 'text-red-500 bg-red-200',
                 init() {
                     this.hidden()
+                    this.el.click(() => this.hidden())
+
                     EventBus.subscribe('alert-error', (e) => {
                         this.showError(e.detail)
                     })

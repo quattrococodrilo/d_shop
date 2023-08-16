@@ -30,3 +30,29 @@ class AddItemToCartViewTest(APITestCase):
             cart_content,
             {str(product.id): {"quantity": 2, "price": f"{product.price}.00"}},
         )
+
+
+class CartItemsViewTest(APITestCase):
+    def setUp(self):
+        self.client = APIClient()
+
+    def test_get_cart_items_respond_ok(self):
+        products = ProductFactory.create_batch(5)
+
+        response = self.client.get(
+            reverse("cart:get_cart_items"),
+        )
+    
+        for product in products:
+            self.client.post(
+                reverse("cart:add_item_to_cart"),
+                {
+                    "product_id": product.id,
+                    "quantity": 2,
+                },
+            )
+
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        print(response.data)

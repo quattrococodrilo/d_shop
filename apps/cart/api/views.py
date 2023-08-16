@@ -3,7 +3,7 @@ from rest_framework.generics import get_object_or_404
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from apps.cart.api.serializers import ItemCartSerializer
+from apps.cart.api.serializers import CartItemsSerializer, ItemCartSerializer
 from apps.cart.cart import Cart
 from apps.shop.models import Product
 
@@ -46,4 +46,29 @@ class GetItemCart(APIView):
         return Response(
             data=serializer.data,
             status=status.HTTP_200_OK,
+        )
+
+
+class GetCartItems(APIView):
+    def get(self, request):
+        cart = Cart(request)
+
+        items = [item for item in cart]
+
+        return Response(
+            data={
+                "items": CartItemsSerializer(items, many=True).data,
+            },
+            status=status.HTTP_200_OK,
+        )
+
+
+class RemoveItemFromCart(APIView):
+    def post(self, request):
+        pk = request.data.get("product_id")
+        cart = Cart(request)
+        cart.remove(get_object_or_404(Product, id=pk))
+
+        return Response(
+            data={"message": "Product removed"},
         )

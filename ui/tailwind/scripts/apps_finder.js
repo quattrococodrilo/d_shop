@@ -29,14 +29,14 @@ const AppsToRender = (dir) => {
         );
       }
 
-      const staticsDir = path.join(dir, childDir, "statics");
+      const staticsDir = path.join(dir, childDir, "static");
 
       if (
         fs.existsSync(staticsDir) &&
         fs.statSync(staticsDir).isDirectory() &&
         fs.readdirSync(staticsDir).length > 0
       ) {
-        pathsToRender.push(path.join(dir, childDir, "statics/**/*.js"));
+        pathsToRender.push(path.join(dir, childDir, "static/**/*.js"));
       }
 
       const formsFile = path.join(dir, childDir, "forms.py");
